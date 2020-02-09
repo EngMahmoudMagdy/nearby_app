@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">NearBy</string>
+    <string name="single_update">Single update</string>
+    <string name="realtime">RealTime</string>
+    <string name="please_wait">Please wait ...</string>
+    <string name="no_data_found">No data found !!</string>
+</resources>
