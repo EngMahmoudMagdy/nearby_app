@@ -3,9 +3,9 @@ package com.magdy.nearby.data.network
 import com.jakewharton.retrofit2.adapter.kotlin.coroutines.CoroutineCallAdapterFactory
 import com.magdy.nearby.data.network.response.PhotoResponse
 import com.magdy.nearby.data.network.response.VenueResponse
-import kotlinx.coroutines.Deferred
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
+import retrofit2.Call
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
@@ -22,17 +22,15 @@ interface ApiService {
     fun getVenueList(
         @Query("ll") latLng: String,
         @Query("radius") radiusRange: String = RADIUS_RANGE
-    ): Deferred<VenueResponse>
+    ): Call<VenueResponse>
 
     @GET("{id}/photos")
     fun getVenuePhotos(
         @Path("id") venueId: String
-    ): Deferred<PhotoResponse>
+    ): Call<PhotoResponse>
 
     companion object {
-        operator fun invoke(
-            connectivityInterceptor: ConnectivityInterceptor
-        ): ApiService {
+        operator fun invoke(): ApiService {
             val requestInterceptor = Interceptor {
                 val url = it.request()
                     .url()
@@ -49,7 +47,6 @@ interface ApiService {
             }
             val okHttpClient = OkHttpClient.Builder()
                 .addInterceptor(requestInterceptor)
-                .addInterceptor(connectivityInterceptor)
                 .build()
             return Retrofit.Builder()
                 .client(okHttpClient)

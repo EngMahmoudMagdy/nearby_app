@@ -7,10 +7,11 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.magdy.nearby.R
+import com.magdy.nearby.data.db.venues.ItemVenueEntry
 import com.magdy.nearby.data.db.venues.VenueEntry
 import kotlinx.android.synthetic.main.item_place.view.*
 
-class PlacesAdapter(private val activity: Activity, private val list: List<VenueEntry>) :
+class PlacesAdapter(private val activity: Activity, private val list: List<ItemVenueEntry>) :
     RecyclerView.Adapter<PlacesAdapter.Holder>() {
 
     override fun onCreateViewHolder(viewGroup: ViewGroup, i: Int): Holder {
@@ -28,7 +29,7 @@ class PlacesAdapter(private val activity: Activity, private val list: List<Venue
     inner class Holder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         fun bindView() = with(itemView){
             val i = adapterPosition
-            val venue = list[i]
+            val venue = list[i].venue
             title.text = venue.name
             address.text = venue.location.address
      /*       description!!.movementMethod = LinkMovementMethod.getInstance()

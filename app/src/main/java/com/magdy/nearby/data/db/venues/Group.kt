@@ -5,5 +5,5 @@ import com.google.gson.annotations.SerializedName
 
 data class Group(
     @SerializedName("items")
-    val entries: List<Item>
+    val entries: List<ItemVenueEntry>
 )

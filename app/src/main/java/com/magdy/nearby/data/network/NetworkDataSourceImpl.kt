@@ -1,11 +1,12 @@
 package com.magdy.nearby.data.network
 
-import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.magdy.nearby.data.network.response.PhotoResponse
 import com.magdy.nearby.data.network.response.VenueResponse
-import com.magdy.nearby.internal.NoConnectionException
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 class NetworkDataSourceImpl(
     private val apiService: ApiService
@@ -18,24 +19,33 @@ class NetworkDataSourceImpl(
     override val downloadedVenuePhotos: LiveData<PhotoResponse>
         get() = _downloadedVenuePhotos
 
-    override suspend fun fetchVenueList(latlng: String) {
-        try {
+    override fun fetchVenueList(latlng: String) {
+        apiService.getVenueList(latlng).enqueue(object : Callback<VenueResponse> {
+            override fun onFailure(call: Call<VenueResponse>, t: Throwable) {
+                _downloadedVenueList.postValue(null)
+            }
 
-            val fetchedList = apiService.getVenueList(latlng).await()
-            _downloadedVenueList.postValue(fetchedList)
-
-        } catch (e: NoConnectionException) {
-            Log.e("NearBy", "no internet connection", e)
-        }
+            override fun onResponse(
+                call: Call<VenueResponse>,
+                response: Response<VenueResponse>
+            ) {
+                _downloadedVenueList.postValue(response.body())
+            }
+        })
     }
 
-    override suspend fun fetchVenuePhotos(id: String) {
-        try {
+    override fun fetchVenuePhotos(id: String) {
+        apiService.getVenuePhotos(id).enqueue(object : Callback<PhotoResponse> {
+            override fun onFailure(call: Call<PhotoResponse>, t: Throwable) {
+                _downloadedVenueList.postValue(null)
+            }
 
-            val fetchedList = apiService.getVenuePhotos(id).await()
-            _downloadedVenuePhotos.postValue(fetchedList)
-
-        } catch (e: NoConnectionException) {
-            Log.e("NearBy", "no internet connection", e)
-        }    }
+            override fun onResponse(
+                call: Call<PhotoResponse>,
+                response: Response<PhotoResponse>
+            ) {
+                _downloadedVenuePhotos.postValue(response.body())
+            }
+        })
+    }
 }
