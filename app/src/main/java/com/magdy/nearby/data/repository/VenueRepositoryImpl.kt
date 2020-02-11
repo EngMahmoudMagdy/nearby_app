@@ -1,34 +1,98 @@
 package com.magdy.nearby.data.repository
 
 import androidx.lifecycle.LiveData
-import com.magdy.nearby.data.db.venues.VenueEntry
+import androidx.lifecycle.MutableLiveData
+import com.magdy.nearby.data.db.LocationDAO
+import com.magdy.nearby.data.db.VenueListDAO
+import com.magdy.nearby.data.db.venues.ItemVenueEntry
+import com.magdy.nearby.data.db.venues.LocationEntry
 import com.magdy.nearby.data.network.NetworkDataSource
 import com.magdy.nearby.data.network.response.VenueResponse
+import com.magdy.nearby.data.provider.LocationProvider
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 
-class VenueRepositoryImpl (
+const val LOCATION_LIMIT = 500.0
+
+class VenueRepositoryImpl(
+    private val venueListDAO: VenueListDAO,
+    private val locationDAO: LocationDAO,
+    private val locationProvider: LocationProvider,
     private val networkDataSource: NetworkDataSource
-): VenueRepository {
+) : VenueRepository {
+    override fun getVenuePhotos(): LiveData<MutableList<ItemVenueEntry>> {
+        return MutableLiveData<MutableList<ItemVenueEntry>>()
+    }
+
     init {
         networkDataSource.downloadedVenueList.observeForever {
             presistFetchedVenueList(it)
         }
     }
-    override suspend fun getCurrentVenues(): LiveData<VenueEntry> {
-     /*   return withContext(Dispatchers.IO)
-        {
-            initWeatherData()
-            return@withContext
-        }*/
+
+    override fun getVenueList(): LiveData<MutableList<ItemVenueEntry>> {
+        initVenueListData()
+        return venueListDAO.getVenueList()
     }
 
-    private fun initWeatherData() {
+    private fun initVenueListData() {
+        if (isDistanceMoreThanLimit() || venueListDAO.getVenueList().value == null) {
+            val location = locationProvider.getLocation()
+            if (location != null)
+                networkDataSource.fetchVenueList("${location.latitude},${location.longitude}")
+        }
 
     }
 
-    private fun presistFetchedVenueList(fetchedListResponse: VenueResponse)
-    {
+    private fun isDistanceMoreThanLimit(): Boolean {
+        var locationEntry = locationDAO.getRecentAddedLocation().value
+        val location = locationProvider.getLocation()
+        if (locationEntry == null) {
+            locationEntry = LocationEntry(
+                "",
+                "",
+                "",
+                "",
+                "",
+                0,
+                ArrayList(),
+                location!!.latitude,
+                location!!.longitude,
+                "",
+                ""
+            )
+            GlobalScope.launch(Dispatchers.IO) {
+                locationDAO.upsert(locationEntry)
+            }
+        }
+        //Decide if the location is in the range limit which is here 500 or not
+        return (locationEntry != null
+                && location != null
+                && calcDistance(
+            locationEntry,
+            location.latitude,
+            location.longitude
+        ) >= LOCATION_LIMIT)
+    }
 
+    private fun calcDistance(locationEntry: LocationEntry, lat: Double, lng: Double): Double {
+        //Calculate the distance between the two locations from the mobile and Room database to decide
+        val result1 = FloatArray(3)
+        android.location.Location.distanceBetween(
+            lat,
+            lng,
+            locationEntry.lat,
+            locationEntry.lng,
+            result1
+        )
+        return result1[0].toDouble()
+    }
+
+    private fun presistFetchedVenueList(fetchedListResponse: VenueResponse) {
+        GlobalScope.launch(Dispatchers.IO) {
+            if (fetchedListResponse.venueGroupsContainer.groups.isNotEmpty())
+                venueListDAO.upsert(fetchedListResponse.venueGroupsContainer.groups[0].entries)
+        }
     }
 }
