@@ -10,18 +10,13 @@ const val CURRENT_LOCATION_ID = 0
 @Entity(tableName = "current_location")
 @TypeConverters(Converters::class)
 data class LocationEntry(
-    val address: String,
-    val cc: String,
-    val city: String,
-    val country: String,
-    val crossStreet: String,
-    val distance: Int,
+    val address: String?,
+    val city: String?,
+    val country: String?,
     @TypeConverters(Converters::class)
     val formattedAddress: List<String>,
     val lat: Double,
-    val lng: Double,
-    val postalCode: String,
-    val state: String
+    val lng: Double
 ) {
     @PrimaryKey(autoGenerate = false)
     var id: Int = CURRENT_LOCATION_ID

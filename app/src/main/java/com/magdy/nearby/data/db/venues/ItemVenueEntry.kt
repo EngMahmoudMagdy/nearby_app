@@ -8,9 +8,8 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "venues")
 data class ItemVenueEntry(
     @Embedded
-    val venue: VenueEntry
-) {
+    val venue: VenueEntry,
     @PrimaryKey(autoGenerate = true)
     @ColumnInfo(name = "id__")
-    var id: Int? = null
-}
+    var id: Int
+)

@@ -1,17 +1,23 @@
 package com.magdy.nearby.ui.nearby
 
-import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
+import com.magdy.nearby.data.network.response.PhotoResponse
 import com.magdy.nearby.data.repository.VenueRepository
 
 class NearByActivityViewModel(
     private val venueRepository: VenueRepository
 ) : ViewModel() {
-    val permissionRequest = MutableLiveData<String>()
-    fun onPermissionResult(granted: Boolean) {
-        if (granted)
-            venueList = venueRepository.getVenueList()
+    var venueList = venueRepository.getVenueList()
+    fun refreshVenueList() {
+        venueList = venueRepository.getVenueList()
     }
 
-    var venueList = venueRepository.getVenueList()
+    public fun getVenueListThrowable(): LiveData<Throwable>  {
+        return venueRepository.getVenueListThrowable()
+    }
+
+    public fun getPhotosById(venueId: String): LiveData<PhotoResponse?> {
+        return venueRepository.getVenuePhotos(venueId)
+    }
 }

@@ -18,6 +18,7 @@ const val VERSION_API = "20200207"
 const val RADIUS_RANGE = "1000"
 
 interface ApiService {
+    //to get the venue list with explore endpoint and the parameters ll for Latitude and Longitude and radius for the range of exploring
     @GET("explore")
     fun getVenueList(
         @Query("ll") latLng: String,
@@ -29,6 +30,7 @@ interface ApiService {
         @Path("id") venueId: String
     ): Call<PhotoResponse>
 
+    //Singleton of API service to use it to download the data
     companion object {
         operator fun invoke(): ApiService {
             val requestInterceptor = Interceptor {

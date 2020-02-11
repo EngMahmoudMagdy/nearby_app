@@ -11,6 +11,11 @@ import android.os.Bundle
 import android.provider.Settings
 import androidx.core.content.ContextCompat
 
+
+/*
+* Location provider implementation for the interface to get the location by instance
+* */
+
 class LocationProviderImpl(
     context: Context
 ) : LocationProvider {
@@ -33,6 +38,7 @@ class LocationProviderImpl(
                 ) {
                     return null
                 }
+                //Request the location from the network provider
                 locationManager.requestLocationUpdates(
                     LocationManager.NETWORK_PROVIDER,
                     MIN_TIME_BW_UPDATES,
@@ -90,9 +96,12 @@ class LocationProviderImpl(
             } catch (e: Exception) {
                 e.printStackTrace()
             }
-
+        //If the location object is null then the GPS is off from the settings
+        //Then open the settings activity to enable it again
         if (location == null) {
-            appContext.startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
+            val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            appContext.startActivity(intent)
         }
         return location
     }

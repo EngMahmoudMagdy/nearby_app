@@ -11,8 +11,10 @@ import com.magdy.nearby.data.db.venues.ItemVenueEntry
 interface VenueListDAO {
   @Insert(onConflict = OnConflictStrategy.REPLACE)
   fun upsert(itemVenueEntryList: MutableList<ItemVenueEntry>)
+  @Query("DELETE FROM venues")
+  fun clearVenueList()
 
   @Query("select * from venues")
-  fun getVenueList(): LiveData<MutableList<ItemVenueEntry>>
+  fun getVenueList(): LiveData<MutableList<ItemVenueEntry>?>
 
 }

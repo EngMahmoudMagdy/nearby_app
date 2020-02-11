@@ -1,12 +1,12 @@
 package com.magdy.nearby.data.repository
 
 import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import com.magdy.nearby.data.db.LocationDAO
 import com.magdy.nearby.data.db.VenueListDAO
 import com.magdy.nearby.data.db.venues.ItemVenueEntry
 import com.magdy.nearby.data.db.venues.LocationEntry
 import com.magdy.nearby.data.network.NetworkDataSource
+import com.magdy.nearby.data.network.response.PhotoResponse
 import com.magdy.nearby.data.network.response.VenueResponse
 import com.magdy.nearby.data.provider.LocationProvider
 import kotlinx.coroutines.Dispatchers
@@ -21,17 +21,21 @@ class VenueRepositoryImpl(
     private val locationProvider: LocationProvider,
     private val networkDataSource: NetworkDataSource
 ) : VenueRepository {
-    override fun getVenuePhotos(): LiveData<MutableList<ItemVenueEntry>> {
-        return MutableLiveData<MutableList<ItemVenueEntry>>()
+    override fun getVenuePhotos(venueId:String): LiveData<PhotoResponse?> {
+        networkDataSource.fetchVenuePhotos(venueId)
+        return networkDataSource.downloadedVenuePhotos
     }
 
+    override fun getVenueListThrowable(): LiveData<Throwable> {
+        return networkDataSource.venueListThrowable
+    }
     init {
         networkDataSource.downloadedVenueList.observeForever {
             presistFetchedVenueList(it)
         }
     }
 
-    override fun getVenueList(): LiveData<MutableList<ItemVenueEntry>> {
+    override fun getVenueList(): LiveData<MutableList<ItemVenueEntry>?> {
         initVenueListData()
         return venueListDAO.getVenueList()
     }
@@ -48,19 +52,23 @@ class VenueRepositoryImpl(
     private fun isDistanceMoreThanLimit(): Boolean {
         var locationEntry = locationDAO.getRecentAddedLocation().value
         val location = locationProvider.getLocation()
+        var lat = 0.0
+        var lng = 0.0
+        if (location != null) {
+
+            lat = location.latitude
+            lng = location.latitude
+        }
+
         if (locationEntry == null) {
+
             locationEntry = LocationEntry(
                 "",
                 "",
                 "",
-                "",
-                "",
-                0,
                 ArrayList(),
-                location!!.latitude,
-                location!!.longitude,
-                "",
-                ""
+                lat,
+                lng
             )
             GlobalScope.launch(Dispatchers.IO) {
                 locationDAO.upsert(locationEntry)
@@ -89,10 +97,13 @@ class VenueRepositoryImpl(
         return result1[0].toDouble()
     }
 
-    private fun presistFetchedVenueList(fetchedListResponse: VenueResponse) {
+    private fun presistFetchedVenueList(fetchedListResponse: VenueResponse?) {
         GlobalScope.launch(Dispatchers.IO) {
-            if (fetchedListResponse.venueGroupsContainer.groups.isNotEmpty())
-                venueListDAO.upsert(fetchedListResponse.venueGroupsContainer.groups[0].entries)
+            if (fetchedListResponse != null && fetchedListResponse.venueGroupsContainer.groups.isNotEmpty()) {
+                val list = fetchedListResponse.venueGroupsContainer.groups[0].entries
+                venueListDAO.clearVenueList()
+                venueListDAO.upsert(list)
+            }
         }
     }
 }

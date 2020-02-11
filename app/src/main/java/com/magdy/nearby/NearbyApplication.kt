@@ -19,6 +19,9 @@ import org.kodein.di.generic.provider
 import org.kodein.di.generic.singleton
 
 class NearbyApplication() : Application(), KodeinAware {
+
+  //Dependencies injection are here in our application class implementation
+
   override val kodein: Kodein = Kodein.lazy {
     import(androidXModule(this@NearbyApplication))
     bind() from singleton { NearByDatabase(instance()) }
